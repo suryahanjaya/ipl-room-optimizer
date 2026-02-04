@@ -2,14 +2,13 @@
 let appState = {
     uploadedFile: null,
     filepath: null,
-    uploadedFile: null,
-    filepath: null,
     results: null,
     currentDetails: null // Store details for filtering
 };
 
 // Welcome Page Functions
 function enterApplication() {
+    console.log("Entering application...");
     document.getElementById('welcomePage').classList.add('hidden');
     document.getElementById('mainApp').classList.remove('hidden');
 }
@@ -22,8 +21,29 @@ function resetToWelcome() {
     document.getElementById('welcomePage').classList.remove('hidden');
 }
 
+// Expose to window for HTML onclick access
+window.enterApplication = enterApplication;
+window.resetToWelcome = resetToWelcome;
+
+// Dark Mode Functions
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+}
+
+function initializeDarkMode() {
+    const darkModeSetting = localStorage.getItem('darkMode');
+    if (darkModeSetting === 'enabled') {
+        document.body.classList.add('dark-mode');
+    }
+}
+
+window.toggleDarkMode = toggleDarkMode;
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+    initializeDarkMode();
     setupEventListeners();
 });
 
@@ -141,6 +161,9 @@ async function startMerging() {
     hide('startBtn');
     show('processingState');
 
+    // Get selected mode
+    const optimizationMode = document.querySelector('input[name="optimizationMode"]:checked').value;
+
     try {
         const response = await fetch('/api/merge', {
             method: 'POST',
@@ -148,25 +171,61 @@ async function startMerging() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                filepath: appState.filepath
+                filepath: appState.filepath,
+                mode: optimizationMode
             })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            appState.results = data.data;
-            showResults(data.data);
+            // Start polling
+            pollTaskStatus(data.task_id);
         } else {
             showError(data.error || 'Merging failed');
+            hide('processingState');
+            show('startBtn');
         }
 
     } catch (error) {
         showError('Failed to process: ' + error.message);
-    } finally {
         hide('processingState');
         show('startBtn');
     }
+}
+
+function pollTaskStatus(taskId) {
+    const pollInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`/api/status/${taskId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                // Update Progress UI
+                const progress = data.progress || 0;
+                const message = data.message || 'Processing...';
+
+                document.getElementById('progressBar').style.width = `${progress}%`;
+                document.getElementById('progressPercentage').textContent = `${progress}%`;
+                document.getElementById('processMessage').textContent = message;
+
+                if (data.status === 'completed') {
+                    clearInterval(pollInterval);
+                    setTimeout(() => {
+                        appState.results = data.result;
+                        showResults(data.result);
+                    }, 500); // Small delay for UX
+                } else if (data.status === 'failed') {
+                    clearInterval(pollInterval);
+                    showError(data.error || 'Optimization failed');
+                    hide('processingState');
+                    show('startBtn');
+                }
+            }
+        } catch (error) {
+            console.error("Polling error:", error);
+        }
+    }, 1000);
 }
 
 function showResults(data) {
@@ -430,7 +489,7 @@ function showRoomDetail(roomName, type, event) {
         let sourcesHtml = '';
         if (roomData.merged_sources && roomData.merged_sources.length > 0) {
             sourcesHtml = roomData.merged_sources.map(src => `
-                <div class="student-item" style="background: #f0fdf4; color: #15803d;">
+                <div class="student-item item-source">
                     ${escapeHtml(src.subject)} (${src.room}) - ${src.students} students
                 </div>
             `).join('');
@@ -439,8 +498,8 @@ function showRoomDetail(roomName, type, event) {
             const originalStudents = currentStudents - addedStudents; // Approximate if total is sum
 
             mergeInfoHtml = `
-                <div class="merge-stats-container" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e6f3fb;">
-                    <div class="student-list-title" style="color: #04249c;">Merge Impact Analysis</div>
+                <div class="merge-stats-container border-primary">
+                    <div class="student-list-title text-primary">Merge Impact Analysis</div>
                     <div class="room-detail-row">
                         <span class="room-detail-label">Current Total:</span>
                         <span class="room-detail-value">${currentStudents} students</span>
@@ -454,8 +513,8 @@ function showRoomDetail(roomName, type, event) {
                         <span class="room-detail-value">+${addedStudents} students</span>
                     </div>
                     
-                    <div class="student-list-title" style="margin-top: 8px;">Classes in this Room:</div>
-                    <div class="student-item" style="background: #e6f3fb; color: #04249c;">
+                    <div class="student-list-title mt-2">Classes in this Room:</div>
+                    <div class="student-item item-host">
                         ${escapeHtml(courseName)} (Host)
                     </div>
                     ${sourcesHtml}
@@ -463,8 +522,8 @@ function showRoomDetail(roomName, type, event) {
             `;
         } else {
             mergeInfoHtml = `
-                <div class="merge-stats-container" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e6f3fb;">
-                    <div class="student-item" style="background: #e6f3fb; color: #04249c;">
+                <div class="merge-stats-container border-primary">
+                    <div class="student-item item-host">
                         ${escapeHtml(courseName)} (No Merges) - ${currentStudents} students
                     </div>
                 </div>
@@ -476,12 +535,12 @@ function showRoomDetail(roomName, type, event) {
         const targetRoom = roomData.merged_to || 'Unknown';
 
         mergeInfoHtml = `
-             <div class="merge-stats-container" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffe6e6;">
-                <div class="student-list-title" style="color: #cc0000;">Merge Status</div>
-                <div class="student-item" style="background: #ffe6e6; color: #cc0000; border: 1px solid #ffcccc;">
+             <div class="merge-stats-container border-danger">
+                <div class="student-list-title text-danger">Merge Status</div>
+                <div class="student-item item-removed">
                     Merged into: <strong>${escapeHtml(targetRoom)}</strong>
                 </div>
-                <div class="room-detail-row" style="margin-top: 8px;">
+                <div class="room-detail-row mt-2">
                     <span class="room-detail-label">Original Count:</span>
                     <span class="room-detail-value">${currentStudents} students</span>
                 </div>
@@ -493,16 +552,16 @@ function showRoomDetail(roomName, type, event) {
     const popup = document.createElement('div');
     popup.className = 'room-detail-popup';
     popup.innerHTML = `
-        <div class="room-detail-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="room-detail-header">
             <span>${escapeHtml(roomName)}</span>
-            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: ${type === 'kept' ? '#e6f3fb' : '#ffe6e6'}; color: ${type === 'kept' ? '#04249c' : '#cc0000'};">
+            <span class="status-badge status-${type}">
                 ${type === 'kept' ? 'Active' : 'Removed'}
             </span>
         </div>
         <div class="room-detail-info">
             <div class="room-detail-row">
                 <span class="room-detail-label">Course:</span>
-                <span class="room-detail-value" style="font-weight:700;">${escapeHtml(courseName)}</span>
+                <span class="room-detail-value font-bold">${escapeHtml(courseName)}</span>
             </div>
             <div class="room-detail-row">
                 <span class="room-detail-label">Students:</span>
@@ -600,6 +659,10 @@ function resetApp() {
     hide('processSection');
     hide('resultsSection');
     hide('errorSection');
+
+    // Ensure start button is visible for next run
+    show('startBtn');
+    hide('processingState');
 
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });

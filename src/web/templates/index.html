@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room Merging Application - Advanced Optimization Platform</title>
+    <title>Room Merging Application</title>
+    <link rel="icon" type="image/svg+xml" href="/static/hcmut.svg">
     <meta name="description"
         content="Professional room merging optimization platform with advanced analytics and real-time processing capabilities">
     <link rel="stylesheet" href="/static/app.css">
@@ -19,21 +20,19 @@
     <div id="welcomePage" class="welcome-page">
         <div class="welcome-background"></div>
         <div class="welcome-content">
-            <div class="welcome-logo">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
-                </svg>
+            <div class="welcome-logo-container">
+                <img src="/static/hcmut.svg" alt="HCMUT Logo" class="welcome-logo-img">
             </div>
 
             <h1 class="welcome-title">
-                Welcome to <span class="welcome-title-gradient">Room Merging</span>
+                <span class="welcome-title-gradient">Room Merging Application</span>
             </h1>
 
-            <p class="welcome-subtitle">Room Optimization Platform</p>
+            <p class="welcome-subtitle">Powered by IPL & Greedy Algorithms</p>
 
             <p class="welcome-description">
-                Professional room optimization system for educational institutions.
-                Upload your data and get optimization results.
+                Optimize exam logistics using Advanced Mixed-Integer Programming (IPL)
+                and Fast Greedy Heuristics for maximum efficiency.
             </p>
 
             <button class="welcome-cta" onclick="enterApplication()">
@@ -43,6 +42,24 @@
                 </svg>
             </button>
         </div>
+
+        <!-- Dark Mode Toggle on Welcome Page -->
+        <button class="welcome-dark-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
     </div>
 
     <!-- Main Application -->
@@ -51,17 +68,32 @@
         <header class="app-header">
             <div class="header-content">
                 <div class="header-brand">
-                    <div class="header-logo">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
-                        </svg>
-                    </div>
+                    <a href="/" class="header-logo-link">
+                        <img src="/static/hcmut.svg" alt="Logo" class="hcmut-logo">
+                    </a>
                     <div class="header-text">
                         <h1 class="app-title">Room Merging Application</h1>
-                        <p class="app-subtitle">Room Optimization Platform</p>
+                        <p class="app-subtitle">IPL & Greedy Optimization Engine</p>
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button id="darkModeToggle" class="btn btn-icon-only" onclick="toggleDarkMode()"
+                        title="Toggle Dark Mode">
+                        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
                     <button id="newUploadBtn" class="btn btn-secondary btn-sm hidden" onclick="resetApp()">
                         <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -127,6 +159,61 @@
                     <p class="section-description">Execute the room optimization algorithm to merge rooms</p>
                 </div>
 
+                <div class="mode-selection">
+                    <h3 class="mode-title">Select Optimization Engine</h3>
+                    <div class="mode-cards">
+                        <label class="mode-card">
+                            <input type="radio" name="optimizationMode" value="fast" checked>
+                            <div class="mode-content">
+                                <div class="mode-icon-wrapper icon-fast">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                                    </svg>
+                                </div>
+                                <div class="mode-info">
+                                    <div class="mode-header">Fast Optimization</div>
+                                    <div class="mode-desc">Heuristic algorithm for rapid processing. Ideal for large
+                                        datasets.</div>
+                                    <div class="mode-meta">~5 seconds • High Efficiency</div>
+                                </div>
+                                <div class="mode-check">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="mode-card">
+                            <input type="radio" name="optimizationMode" value="deep">
+                            <div class="mode-content">
+                                <div class="mode-icon-wrapper icon-deep">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                                        <path d="M10 9l2 2 4-4"></path>
+                                    </svg>
+                                </div>
+                                <div class="mode-info">
+                                    <div class="mode-header">Deep Intelligence</div>
+                                    <div class="mode-desc">Mixed-Integer Programming (MILP) for mathematical optimality.
+                                    </div>
+                                    <div class="mode-meta">~2 minutes • Maximum Savings</div>
+                                </div>
+                                <div class="mode-check">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
                 <button id="startBtn" class="btn btn-success" onclick="startMerging()">
                     <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M8 5v14l11-7z" />
@@ -135,9 +222,15 @@
                 </button>
 
                 <div id="processingState" class="processing-state hidden">
-                    <div class="spinner"></div>
-                    <p class="processing-text">Processing your data</p>
-                    <p class="processing-subtext">Analyzing and optimizing room allocations</p>
+                    <div class="progress-wrapper">
+                        <div class="progress-container">
+                            <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="progressPercentage" class="progress-percentage">0%</span>
+                            <span id="processMessage" class="progress-message">Initializing optimization...</span>
+                        </div>
+                    </div>
                 </div>
             </section>
 

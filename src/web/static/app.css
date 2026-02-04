@@ -29,7 +29,7 @@
     /* Gradient Definitions - Dark Blue to Light Blue */
     --gradient-primary: linear-gradient(135deg, #04249c 0%, #148bdb 100%);
     --gradient-success: linear-gradient(135deg, #148bdb 0%, #04249c 100%);
-    --gradient-dark: linear-gradient(135deg, #04249c 0%, #031a6b 100%);
+    --gradient-dark: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
     --gradient-overlay: linear-gradient(135deg, rgba(4, 36, 156, 0.05) 0%, rgba(20, 139, 219, 0.05) 100%);
 
     /* Neutral Colors - White and Blue-tinted */
@@ -85,6 +85,383 @@
     --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ============================================
+   DARK MODE THEME
+   ============================================ */
+body.dark-mode {
+    --color-bg: #0d1117;
+    --color-surface: #161b22;
+    --color-surface-elevated: #1c2128;
+    --color-border: #30363d;
+    --color-border-light: #21262d;
+    --color-text: #e6edf3;
+    --color-text-secondary: #8b949e;
+    --color-text-tertiary: #6e7681;
+
+    /* Dark mode shadows */
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 4px 8px -2px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 8px 16px -4px rgba(0, 0, 0, 0.7);
+    --shadow-glow: 0 0 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark Mode - Welcome Page */
+body.dark-mode .welcome-page {
+    background: var(--gradient-dark);
+}
+
+body.dark-mode .welcome-background {
+    background: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+}
+
+/* Dark Mode - App Header */
+body.dark-mode .app-header {
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Dark Mode - Primary Buttons */
+body.dark-mode .btn-primary {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+body.dark-mode .btn-primary:hover {
+    background: var(--color-border);
+    border-color: var(--color-text-secondary);
+}
+
+/* Dark Mode - Buttons */
+body.dark-mode .btn-secondary {
+    background: var(--color-surface-elevated);
+    color: var(--color-text);
+    border-color: var(--color-border);
+}
+
+body.dark-mode .btn-secondary:hover {
+    background: var(--color-border);
+    border-color: var(--color-primary);
+}
+
+/* Dark Mode - Section Cards */
+body.dark-mode .section {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+/* Dark Mode - Upload Area */
+body.dark-mode .upload-area {
+    background: var(--color-surface-elevated);
+    border-color: var(--color-border);
+}
+
+body.dark-mode .upload-area:hover {
+    border-color: var(--color-primary);
+}
+
+/* Dark Mode - Mode Selection Cards */
+body.dark-mode .mode-card {
+    background: var(--color-surface-elevated);
+    border-color: var(--color-border);
+}
+
+body.dark-mode .mode-card:hover {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+}
+
+body.dark-mode .mode-card.selected,
+body.dark-mode .mode-card:has(input:checked) {
+    border-color: var(--color-primary);
+    background: rgba(20, 139, 219, 0.1);
+}
+
+/* Dark Mode - File Info */
+body.dark-mode .file-info {
+    background: var(--color-surface-elevated);
+    border-color: var(--color-border);
+}
+
+/* Dark Mode - Tables */
+body.dark-mode table th {
+    background: var(--color-surface-elevated);
+}
+
+body.dark-mode table tr:hover {
+    background: rgba(20, 139, 219, 0.05);
+}
+
+/* Dark Mode - Progress Bar */
+/* Dark Mode - Progress Bar */
+body.dark-mode .progress-container {
+    background: var(--color-border);
+}
+
+/* Dark Mode - Statistic Cards */
+body.dark-mode .stat-card {
+    background: var(--color-surface-elevated);
+    border-color: var(--color-border);
+}
+
+body.dark-mode .stat-card-label {
+    color: var(--color-text-secondary);
+}
+
+body.dark-mode .stat-card-value {
+    color: var(--color-text);
+}
+
+/* Dark Mode - Inputs and Selects */
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+body.dark-mode input[type="text"],
+body.dark-mode select {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+body.dark-mode .search-box input {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+}
+
+body.dark-mode .search-icon {
+    stroke: var(--color-text-secondary);
+}
+
+body.dark-mode ::placeholder {
+    color: var(--color-text-tertiary);
+}
+
+/* Dark Mode - Detail Cards */
+body.dark-mode .detail-card {
+    background: var(--color-surface-elevated);
+    border-color: var(--color-border);
+}
+
+body.dark-mode .detail-stats {
+    border-bottom-color: var(--color-border);
+}
+
+/* Fix View Details Button in Header */
+.detail-view-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.detail-view-btn:hover {
+    background: white;
+    color: var(--color-primary);
+}
+
+/* Fix Popup Header Text Color in Dark Mode */
+body.dark-mode .room-detail-header span:first-child {
+    color: #60a5fa;
+    /* Light Blue for Room Name */
+}
+
+/* Dark Mode - Room Tags in Main List */
+body.dark-mode .room-tag.kept {
+    background: rgba(20, 139, 219, 0.15);
+    color: #93c5fd;
+    border-color: rgba(20, 139, 219, 0.4);
+}
+
+body.dark-mode .room-tag.removed {
+    background: rgba(204, 0, 0, 0.15);
+    color: #fca5a5;
+    border-color: rgba(204, 0, 0, 0.4);
+}
+
+body.dark-mode .rooms-count {
+    background: var(--color-border);
+    color: var(--color-text);
+}
+
+/* Dark Mode - Start Button */
+body.dark-mode .btn-success {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+body.dark-mode .btn-success:hover {
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+/* ============================================
+   ROOM DETAILS POPUP STYLES
+   ============================================ */
+.room-detail-popup {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border-light);
+    box-shadow: var(--shadow-xl);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    min-width: 300px;
+    font-size: var(--font-size-sm);
+    z-index: 1000;
+}
+
+body.dark-mode .room-detail-popup {
+    background: var(--color-surface-elevated);
+    border-color: var(--color-border);
+}
+
+.room-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border-light);
+    font-weight: 700;
+    font-size: var(--font-size-lg);
+}
+
+body.dark-mode .room-detail-header {
+    border-bottom-color: var(--color-border);
+}
+
+.room-detail-info {
+    margin-bottom: var(--spacing-md);
+}
+
+.room-detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.room-detail-label {
+    color: var(--color-text-secondary);
+}
+
+.status-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.status-kept {
+    background: var(--color-primary-pale);
+    color: var(--color-primary);
+}
+
+.status-removed {
+    background: #ffe6e6;
+    color: #cc0000;
+}
+
+body.dark-mode .status-kept {
+    background: rgba(20, 139, 219, 0.2);
+    color: #60a5fa;
+}
+
+body.dark-mode .status-removed {
+    background: rgba(204, 0, 0, 0.2);
+    color: #f87171;
+}
+
+/* Merge Items */
+.student-item {
+    margin-bottom: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: var(--font-size-xs);
+}
+
+.item-host {
+    background: var(--color-primary-pale);
+    color: var(--color-primary-dark);
+}
+
+.item-source {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.item-removed {
+    background: #ffe6e6;
+    color: #cc0000;
+}
+
+body.dark-mode .item-host {
+    background: rgba(20, 139, 219, 0.15);
+    color: #93c5fd;
+}
+
+body.dark-mode .item-source {
+    background: rgba(21, 128, 61, 0.2);
+    color: #86efac;
+}
+
+body.dark-mode .item-removed {
+    background: rgba(204, 0, 0, 0.2);
+    color: #fca5a5;
+}
+
+/* Utilities within Popup */
+.merge-stats-container {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid;
+}
+
+.border-primary {
+    border-color: var(--color-border);
+}
+
+.border-danger {
+    border-color: #ffe6e6;
+}
+
+body.dark-mode .border-danger {
+    border-color: rgba(204, 0, 0, 0.3);
+}
+
+.text-primary {
+    color: var(--color-primary);
+}
+
+.text-danger {
+    color: #cc0000;
+}
+
+body.dark-mode .text-primary {
+    color: #60a5fa;
+}
+
+body.dark-mode .text-danger {
+    color: #f87171;
+}
+
+.mt-2 {
+    margin-top: 8px;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+/* Smooth transition for theme changes */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 body {
     font-family: var(--font-family);
     background: var(--color-bg);
@@ -110,106 +487,153 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--gradient-dark);
+    background: linear-gradient(135deg, #04249c 0%, #148bdb 100%);
+    /* Default Blue Gradient */
     position: relative;
     overflow: hidden;
-}
-
-.welcome-background {
-    position: absolute;
-    inset: 0;
-    opacity: 0.08;
-    background-image:
-        radial-gradient(circle at 20% 50%, #148bdb 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, #04249c 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, #148bdb 0%, transparent 50%);
-    animation: backgroundPulse 20s ease-in-out infinite;
-}
-
-@keyframes backgroundPulse {
-
-    0%,
-    100% {
-        opacity: 0.1;
-    }
-
-    50% {
-        opacity: 0.15;
-    }
-}
-
-.welcome-content {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-    padding: var(--spacing-2xl);
-    max-width: 900px;
-    animation: fadeInUp 1s ease-out;
-}
-
-.welcome-logo {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto var(--spacing-lg);
-    background: var(--gradient-primary);
-    border-radius: var(--radius-xl);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-xl), var(--shadow-glow);
-    animation: logoFloat 3s ease-in-out infinite;
-}
-
-.welcome-logo svg {
-    width: 32px;
-    height: 32px;
-    fill: white;
-}
-
-@keyframes logoFloat {
-
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
+    transition: background 0.5s ease;
 }
 
 .welcome-title {
     font-size: var(--font-size-5xl);
     font-weight: 800;
     color: white;
+    /* White Text */
     margin-bottom: var(--spacing-md);
     letter-spacing: -0.03em;
     line-height: 1.1;
-}
-
-.welcome-title-gradient {
-    background: linear-gradient(135deg, #148bdb 0%, #3da3e8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    transition: color 0.3s ease;
 }
 
 .welcome-subtitle {
     font-size: var(--font-size-xl);
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.9);
+    /* Light Text */
     margin-bottom: var(--spacing-sm);
     font-weight: 400;
+    transition: color 0.3s ease;
 }
 
 .welcome-description {
     font-size: var(--font-size-lg);
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.8);
+    /* Light Text */
     margin-bottom: var(--spacing-2xl);
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
     line-height: 1.7;
+    transition: color 0.3s ease;
 }
+
+/* Dark Mode Overrides for Welcome Page Background Only */
+body.dark-mode .welcome-page {
+    /* Premium Obsidian Gradient */
+    background: radial-gradient(circle at top left, #3a3a3a 0%, #121212 50%, #000000 100%);
+}
+
+/* Specific Override for Get Started Button in Dark Mode */
+body.dark-mode .welcome-cta {
+    /* Metallic/Grey Gradient for Dark Mode */
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .welcome-cta:hover {
+    background: linear-gradient(135deg, #718096 0%, #4a5568 100%) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Text Overrides (Keep White) */
+body.dark-mode .welcome-title {
+    color: white;
+}
+
+body.dark-mode .welcome-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark-mode .welcome-description {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Toggle Button - Top Center & Glass Effect */
+.welcome-dark-toggle {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    /* Glass Background */
+    backdrop-filter: blur(8px);
+
+    /* Shape */
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    z-index: 10;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-dark-toggle:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateX(-50%) scale(1.1);
+    /* Keep centered */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .welcome-dark-toggle {
+    color: #e6edf3;
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .welcome-dark-toggle:hover {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* Fix Icon Toggling logic */
+.welcome-dark-toggle .icon-moon {
+    display: none !important;
+}
+
+.welcome-dark-toggle .icon-sun {
+    display: block !important;
+}
+
+body.dark-mode .welcome-dark-toggle .icon-sun {
+    display: none !important;
+}
+
+body.dark-mode .welcome-dark-toggle .icon-moon {
+    display: block !important;
+}
+
+/* Force Get Started Button to always be Blue Gradient */
+.welcome-cta {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(20, 139, 219, 0.4);
+    border: none;
+}
+
+.welcome-cta:hover {
+    box-shadow: 0 6px 20px rgba(20, 139, 219, 0.6);
+    transform: translateY(-2px);
+}
+
 
 .welcome-features {
     display: grid;
@@ -334,21 +758,24 @@ body {
     gap: var(--spacing-md);
 }
 
-.header-logo {
-    width: 48px;
-    height: 48px;
-    background: rgba(255, 255, 255, 0.15);
+.hcmut-logo {
+    height: 54px;
+    width: auto;
+    object-fit: contain;
+    background: white;
+    padding: 6px 10px;
     border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.header-logo svg {
-    width: 28px;
-    height: 28px;
-    fill: white;
+.welcome-logo-img {
+    height: 120px;
+    width: auto;
+    background: white;
+    padding: 15px 25px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    margin-bottom: var(--spacing-lg);
 }
 
 .header-text {
@@ -372,6 +799,46 @@ body {
 .header-actions {
     display: flex;
     gap: var(--spacing-sm);
+    align-items: center;
+}
+
+/* Dark Mode Toggle Button */
+.btn-icon-only {
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    color: white;
+}
+
+.btn-icon-only:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+}
+
+.btn-icon-only svg {
+    width: 48px;
+    height: 48px;
+    transition: opacity var(--transition-base), transform var(--transition-base);
+}
+
+.btn-icon-only .icon-moon {
+    display: none;
+}
+
+body.dark-mode .btn-icon-only .icon-sun {
+    display: none;
+}
+
+body.dark-mode .btn-icon-only .icon-moon {
+    display: block;
 }
 
 /* ============================================
@@ -604,6 +1071,144 @@ body {
     opacity: 1;
 }
 
+/* ============================================
+   MODE SELECTION (MODERN 2026 STYLE)
+   ============================================ */
+.mode-selection {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.mode-title {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-lg);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mode-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.mode-card {
+    position: relative;
+    cursor: pointer;
+}
+
+.mode-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.mode-content {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    transition: all 0.2s ease;
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.mode-card:hover .mode-content {
+    border-color: var(--color-primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.mode-card input:checked+.mode-content {
+    border-color: var(--color-primary);
+    background: rgba(4, 36, 156, 0.02);
+    box-shadow: 0 0 0 2px var(--color-primary), var(--shadow-md);
+}
+
+/* Icon Styles */
+.mode-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.icon-fast {
+    background: linear-gradient(135deg, #e6f3fb 0%, #f0f7fc 100%);
+    color: #04249c;
+}
+
+.icon-deep {
+    background: linear-gradient(135deg, #f5f3ff 0%, #fdf2f8 100%);
+    color: #7c3aed;
+}
+
+.mode-icon-wrapper svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Text Styles */
+.mode-info {
+    flex: 1;
+}
+
+.mode-header {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.3;
+}
+
+.mode-desc {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: var(--spacing-md);
+}
+
+.mode-meta {
+    display: inline-block;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-light);
+}
+
+/* Checkmark */
+.mode-check {
+    position: absolute;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s ease;
+    color: var(--color-primary);
+}
+
+.mode-check svg {
+    width: 20px;
+    height: 20px;
+}
+
+.mode-card input:checked+.mode-content .mode-check {
+    opacity: 1;
+    transform: scale(1);
+}
+
 .btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
@@ -714,41 +1319,83 @@ body {
 }
 
 /* ============================================
-   PROCESSING STATE
+   PROCESSING STATE (PROGRESS BAR)
    ============================================ */
 
 .processing-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: var(--spacing-3xl);
-    gap: var(--spacing-lg);
+    padding: var(--spacing-xl) 0;
+    width: 100%;
 }
 
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--color-border-light);
-    border-top-color: var(--color-primary);
+.progress-wrapper {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.progress-container {
+    height: 12px;
+    background: var(--color-border-light);
     border-radius: var(--radius-full);
-    animation: spin 0.8s linear infinite;
+    overflow: hidden;
+    margin-bottom: var(--spacing-md);
+    position: relative;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
+.progress-bar {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(20, 139, 219, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(45deg,
+            rgba(255, 255, 255, 0.2) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, 0.2) 50%,
+            rgba(255, 255, 255, 0.2) 75%,
+            transparent 75%,
+            transparent);
+    background-size: 20px 20px;
+    animation: moveStripes 1s linear infinite;
+}
+
+@keyframes moveStripes {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 20px 0;
     }
 }
 
-.processing-text {
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    color: var(--color-text);
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--font-size-sm);
 }
 
-.processing-subtext {
-    font-size: var(--font-size-base);
+.progress-percentage {
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.progress-message {
     color: var(--color-text-secondary);
+    font-weight: 500;
 }
 
 /* ============================================
@@ -1410,6 +2057,7 @@ body {
         font-size: var(--font-size-base);
     }
 }
+
 /* ============================================
    RESULT CONTROLS (Search & Filter)
    ============================================ */
@@ -1514,7 +2162,8 @@ body {
     overflow: hidden;
     animation: fadeInUp 0.5s ease-out backwards;
     transition: all var(--transition-base);
-    height: 100%; /* Fill grid height */
+    height: 100%;
+    /* Fill grid height */
     display: flex;
     flex-direction: column;
 }
@@ -1524,10 +2173,252 @@ body {
     .details-container {
         grid-template-columns: 1fr;
     }
-    
+
     .result-controls {
         flex-direction: column;
         align-items: stretch;
     }
 }
 
+/* Utility */
+.hidden {
+    display: none !important;
+}
+
+/* ============================================
+   DARK MODE OVERRIDES - POPUPS & MODALS
+   ============================================ */
+body.dark-mode .detail-view-btn {
+    background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .detail-view-btn:hover {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .modal-content {
+    background: #1a202c;
+    /* Darker bg */
+    border: 1px solid #2d3748;
+    color: #e2e8f0;
+}
+
+body.dark-mode .modal-header {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    border-bottom: 1px solid #4a5568;
+}
+
+body.dark-mode .modal-close {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .merge-item {
+    background: #2d3748;
+    border-left-color: #63b3ed;
+}
+
+body.dark-mode .merge-item-header {
+    color: #e2e8f0;
+}
+
+body.dark-mode .merge-item-detail {
+    color: #a0aec0;
+}
+
+body.dark-mode .merge-arrow {
+    color: #63b3ed;
+}
+
+/* Room Detail Popup (Small) */
+body.dark-mode .room-detail-popup {
+    background: #1a202c;
+    border-color: #4a5568;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .room-detail-header {
+    color: #63b3ed;
+    border-bottom-color: #2d3748;
+}
+
+body.dark-mode .room-detail-label {
+    color: #a0aec0;
+}
+
+body.dark-mode .room-detail-value {
+    color: #e2e8f0;
+}
+
+body.dark-mode .student-item {
+    background: #2d3748;
+    color: #cbd5e0;
+}
+
+body.dark-mode .student-list {
+    border-top-color: #2d3748;
+}
+
+body.dark-mode .student-list-title {
+    color: #e2e8f0;
+}
+
+body.dark-mode .merge-explanation h4,
+body.dark-mode .merge-explanation h5 {
+    color: #90cdf4 !important;
+}
+
+body.dark-mode .merge-explanation p {
+    color: #cbd5e0;
+}
+
+body.dark-mode .no-changes-text {
+    color: #a0aec0;
+}
+
+/* Search Box & Filters in Dark Mode */
+body.dark-mode .result-controls {
+    background: #1a202c;
+    border-color: #2d3748;
+}
+
+body.dark-mode .search-box input {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+body.dark-mode .search-box input:focus {
+    border-color: #63b3ed;
+}
+
+body.dark-mode .filter-select {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+body.dark-mode .filter-select:hover {
+    border-color: #63b3ed;
+}
+
+body.dark-mode .search-icon {
+    color: #a0aec0;
+}
+
+/* Dark Mode Overlay Fix */
+body.dark-mode .modal-overlay {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+/* Ensure Utility Colors are Visible in Dark Mode */
+.text-primary {
+    color: #04249c;
+}
+
+.text-danger {
+    color: #dc2626;
+}
+
+.border-primary {
+    border: 1px solid #148bdb;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.border-danger {
+    border: 1px solid #dc2626;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+body.dark-mode .text-primary {
+    color: #90cdf4 !important;
+}
+
+body.dark-mode .text-danger {
+    color: #fc8181 !important;
+}
+
+body.dark-mode .border-primary {
+    border-color: #4299e1 !important;
+}
+
+body.dark-mode .border-danger {
+    border-color: #fc8181 !important;
+}
+
+/* Status Badge */
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-kept {
+    background-color: #def7ec;
+    color: #03543f;
+}
+
+.status-removed {
+    background-color: #fde8e8;
+    color: #9b1c1c;
+}
+
+body.dark-mode .status-removed {
+    background-color: #7f1d1d;
+    color: #fca5a5;
+}
+
+/* Fix for Detail Header in Dark Mode */
+body.dark-mode .detail-header {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    border-bottom: 1px solid #4a5568;
+}
+
+/* Update View Details Button for Dark Mode - Premium Black */
+body.dark-mode .detail-view-btn {
+    background: linear-gradient(145deg, #3a3a3a 0%, #121212 100%);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f3f4f6;
+}
+
+body.dark-mode .detail-view-btn:hover {
+    background: linear-gradient(145deg, #4d4d4d 0%, #1f1f1f 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+/* Fix Optimization Mode Icons in Dark Mode */
+body.dark-mode .icon-fast {
+    background: linear-gradient(135deg, #2c5282 0%, #2a4365 100%);
+    color: #bee3f8;
+    border: 1px solid #4299e1;
+}
+
+body.dark-mode .icon-deep {
+    background: linear-gradient(135deg, #553c9a 0%, #44337a 100%);
+    color: #e9d8fd;
+    border: 1px solid #9f7aea;
+}
+
+/* Ensure detail title in header pops */
+body.dark-mode .detail-title {
+    color: #ebf8ff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .detail-badge {
+    background: rgba(0, 0, 0, 0.3);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}

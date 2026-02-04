@@ -8,14 +8,22 @@ import pandas as pd
 import json
 import os
 import sys
+import threading
+import uuid
+import re
 from pathlib import Path
 import subprocess
 import traceback
+from datetime import datetime
+import time
 
 app = Flask(__name__, 
             static_folder='static',
             template_folder='templates')
 CORS(app)
+
+# Global task storage
+TASK_STATUS = {}
 
 # Get project root
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -26,46 +34,118 @@ UPLOAD_FOLDER.mkdir(exist_ok=True)
 app.config['UPLOAD_FOLDER'] = str(UPLOAD_FOLDER)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-def run_merging(input_file):
-    """Run the merging.py script on the input file"""
+def optimization_worker(task_id, input_file, mode):
+    """
+    Worker thread function to run optimization and update status
+    """
     try:
-        # Prepare output paths
-        output_file = RESULTS_FOLDER / 'IPL_merge_result.xlsx'
-        merged_file = RESULTS_FOLDER / 'phong_sau_gop.xlsx'
+        TASK_STATUS[task_id]['status'] = 'running'
+        TASK_STATUS[task_id]['progress'] = 0
+        TASK_STATUS[task_id]['message'] = 'Initializing optimization engine...'
         
-        # Run NEW FAST merging script with correct arguments
-        result = subprocess.run(
-            [
-                'python', 
-                'ipl_optimizer.py',  # ⚡ NEW: Ultra-fast optimizer
-                '-i', str(input_file),
-                '-o', str(output_file),
-                '--merged-out', str(merged_file),
-                '--threshold', '0',  # ⚡ Force greedy mode (ultra-fast!)
-                '--verbose'  # Show progress
-            ],
+        # Prepare output paths with TIMESTAMP
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        output_filename = f"Result_{timestamp}.xlsx"
+        output_file = RESULTS_FOLDER / output_filename
+        
+        # Configure arguments based on mode
+        cmd = [
+            'python', 
+            '-u', # ⚡ Force unbuffered stdout for real-time progress
+            'src/ipl_optimizer.py',
+            '-i', str(input_file),
+            '-o', str(output_file),
+            '--verbose'
+        ]
+        
+        if mode == 'deep':
+            # 🧠 Deep Optimization
+            cmd.extend(['--threshold', '200', '--time-limit', '600'])
+            TASK_STATUS[task_id]['message'] = 'Running Deep Optimization (MILP)...'
+        else:
+            # 🚀 Fast Mode
+            cmd.extend(['--threshold', '0'])
+            TASK_STATUS[task_id]['message'] = 'Running Fast Optimization...'
+
+        # Use Popen to read output in real-time
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             cwd=str(PROJECT_ROOT),
-            capture_output=True,
             text=True,
-            timeout=300  # 5 minute timeout (much faster now!)
+            bufsize=1,
+            universal_newlines=True
         )
         
-        if result.returncode != 0:
-            return {
-                'success': False,
-                'error': f"Merging failed: {result.stderr}"
-            }
+        total_groups = 0
+        processed_groups = 0
         
-        return {
-            'success': True,
-            'output': result.stdout
-        }
+        # Read output line by line
+        for line in process.stdout:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Check for total groups count
+            if "Total Groups:" in line:
+                try:
+                    total_groups = int(line.split(":")[1].strip())
+                    TASK_STATUS[task_id]['total'] = total_groups
+                except:
+                    pass
+            
+            # Check for progress update: "Processing [i/N]: ..."
+            # Regex to capture processing index
+            match = re.search(r"Processing \[(\d+)/(\d+)\]:", line)
+            if match:
+                current = int(match.group(1))
+                total = int(match.group(2))
+                total_groups = total # Update just in case
+                
+                percentage = int((current / total) * 100)
+                TASK_STATUS[task_id]['progress'] = percentage
+                TASK_STATUS[task_id]['message'] = f"Processing Group {current} of {total}..."
+            
+            # Also capture basic "Processing:" log for fallback
+            elif "Processing:" in line and total_groups > 0:
+                # Fallback estimation if regex fails
+                 processed_groups += 1
+                 percentage = int((processed_groups / total_groups) * 100)
+                 TASK_STATUS[task_id]['progress'] = min(99, percentage)
+        
+        # Wait for process to finish
+        process.wait()
+        
+        if process.returncode != 0:
+             raise Exception("Optimizer process failed or returned errors.")
+        
+        # Process output
+        TASK_STATUS[task_id]['message'] = 'Finalizing results...'
+        TASK_STATUS[task_id]['progress'] = 99
+        
+        # Export logic inside worker
+        if not output_file.exists():
+             raise Exception("Output file was not created.")
+        
+        json_result = export_results_to_json(output_file)
+        
+        if not json_result['success']:
+             raise Exception(json_result.get('error', 'Failed to parse results'))
+             
+        # Add download URL
+        json_result['data']['download_url'] = f"/results/{output_file.name}"
+        
+        TASK_STATUS[task_id]['result'] = json_result['data']
+        TASK_STATUS[task_id]['status'] = 'completed'
+        TASK_STATUS[task_id]['progress'] = 100
+        TASK_STATUS[task_id]['message'] = 'Optimization Completed!'
         
     except Exception as e:
-        return {
-            'success': False,
-            'error': f"Error running merging: {str(e)}\n{traceback.format_exc()}"
-        }
+        TASK_STATUS[task_id]['status'] = 'failed'
+        TASK_STATUS[task_id]['error'] = str(e)
+        print(f"Task {task_id} failed: {e}")
+        traceback.print_exc()
 
 def export_results_to_json(excel_file):
     """Export Excel results to JSON with detailed room and subject info"""
@@ -224,10 +304,11 @@ def upload_file():
 
 @app.route('/api/merge', methods=['POST'])
 def merge():
-    """Run the merging process"""
+    """Start the merging process as a background task"""
     try:
         data = request.get_json()
         input_file = data.get('filepath')
+        mode = data.get('mode', 'fast') # Default to fast
         
         if not input_file or not os.path.exists(input_file):
             return jsonify({
@@ -235,66 +316,57 @@ def merge():
                 'error': 'Input file not found'
             }), 400
         
-        # Run merging
-        result = run_merging(input_file)
+        # Create task ID
+        task_id = str(uuid.uuid4())
         
-        if not result['success']:
-            return jsonify(result), 500
+        # Initialize task status
+        TASK_STATUS[task_id] = {
+            'status': 'pending',
+            'progress': 0,
+            'message': 'Starting...',
+            'result': None
+        }
         
-        # Check if result file was created
-        result_file = RESULTS_FOLDER / 'IPL_merge_result.xlsx'
-        
-        if not result_file.exists():
-            return jsonify({
-                'success': False,
-                'error': 'Merging completed but result file not found'
-            }), 500
-        
-        # Export to JSON
-        json_result = export_results_to_json(result_file)
-        
-        if not json_result['success']:
-            return jsonify(json_result), 500
+        # Start background thread
+        thread = threading.Thread(
+            target=optimization_worker,
+            args=(task_id, input_file, mode)
+        )
+        thread.daemon = True
+        thread.start()
         
         return jsonify({
             'success': True,
-            'data': json_result['data'],
-            'message': 'Merging completed successfully'
+            'task_id': task_id,
+            'message': 'Optimization started'
         })
         
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': f"Merge failed: {str(e)}\n{traceback.format_exc()}"
+            'error': f"Merge start failed: {str(e)}"
         }), 500
 
-@app.route('/api/results')
-def get_results():
-    """Get existing results if available"""
-    try:
-        result_file = RESULTS_FOLDER / 'IPL_merge_result.xlsx'
+@app.route('/api/status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    """Get status of a background task"""
+    task = TASK_STATUS.get(task_id)
+    if not task:
+        return jsonify({'success': False, 'error': 'Task not found'}), 404
         
-        if not result_file.exists():
-            return jsonify({
-                'success': False,
-                'error': 'No results available yet'
-            }), 404
-        
-        json_result = export_results_to_json(result_file)
-        
-        if not json_result['success']:
-            return jsonify(json_result), 500
-        
-        return jsonify({
-            'success': True,
-            'data': json_result['data']
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+    return jsonify({
+        'success': True,
+        'status': task['status'],
+        'progress': task['progress'],
+        'message': task['message'],
+        'result': task.get('result')
+    })
+
+@app.route('/results/<path:filename>')
+def download_result(filename):
+    """Serve result files"""
+    from flask import send_from_directory
+    return send_from_directory(RESULTS_FOLDER, filename, as_attachment=True)
 
 if __name__ == '__main__':
     print("="*60)

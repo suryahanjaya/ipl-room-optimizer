@@ -1,7 +1,7 @@
 """
 IPL Room Merging Optimizer
 ===========================
-Optimized implementation based on IPL (4).pdf specification.
+Implementation based on IPL (4).pdf specification.
 Combines exact MILP solver with fast heuristic for large-scale datasets.
 
 Core Algorithm:
@@ -76,7 +76,7 @@ def validate_room_data(rooms: List[str], students: List[int], capacities: List[i
 
 
 # ============================================================================
-# GREEDY HEURISTIC SOLVER (Fast, for large datasets)
+# GREEDY HEURISTIC SOLVER 
 # ============================================================================
 
 class GreedyBinPacker:
@@ -111,7 +111,7 @@ class GreedyBinPacker:
         current_subjects = [set([subj]) for subj in self.subjects]
         
         # MULTI-PASS ALGORITHM: Try multiple strategies, pick the best
-        # This achieves 41.2% savings (best among all tested algorithms)
+        # This strategy aims to maximize space utilization by evaluating multiple sorting criteria.
         
         def try_best_fit(order):
             """Try Best-Fit with given order"""
@@ -224,7 +224,7 @@ class GreedyBinPacker:
 
 
 # ============================================================================
-# EXACT MILP SOLVER (Optimal, for small-medium datasets)
+# Exact MILP Solver (for small-medium datasets)
 # ============================================================================
 
 class MILPRoomOptimizer:
@@ -549,16 +549,20 @@ def generate_output_reports(shift: str, campus: str,
 # MAIN PROCESSING PIPELINE
 # ============================================================================
 
-def process_exam_data(input_path: str, output_path: str, merged_output_path: str,
-                     sheet_name: Any = 0, size_threshold: int = 80,
-                     time_limit: int = 30, verbose: bool = False) -> None:
+def process_exam_data(
+    input_path: Path,
+    output_path: Path,
+    sheet_name: str = 0,
+    size_threshold: int = 15,
+    time_limit: int = 300,
+    verbose: bool = False
+):
     """
     Main processing pipeline for exam room optimization.
     
     Args:
         input_path: Path to input Excel file
         output_path: Path for main output Excel file
-        merged_output_path: Path for merged rooms Excel file
         sheet_name: Sheet name or index to read
         size_threshold: Problem size threshold for solver selection
         time_limit: Time limit for MILP solver (seconds)
@@ -677,7 +681,11 @@ def process_exam_data(input_path: str, output_path: str, merged_output_path: str
     all_stats = []
     
     # Process each (shift, campus) group
-    for (shift_id, campus_id), group_data in working_data.groupby(["shift", "campus"], sort=True):
+    groups_to_process = list(working_data.groupby(["shift", "campus"], sort=True))
+    total_groups = len(groups_to_process)
+    print(f"Total Groups: {total_groups}")
+    
+    for i, ((shift_id, campus_id), group_data) in enumerate(groups_to_process, 1):
         group_data = group_data.reset_index(drop=True)
         
         rooms_list = group_data["room"].tolist()
@@ -688,7 +696,7 @@ def process_exam_data(input_path: str, output_path: str, merged_output_path: str
         group_size = len(group_data)
         
         if verbose:
-            print(f"Processing: shift={shift_id}, campus={campus_id}, rooms={group_size}")
+            print(f"Processing [{i}/{total_groups}]: shift={shift_id}, campus={campus_id}, rooms={group_size}")
         
         # Adaptive solver selection
         try:
@@ -759,13 +767,14 @@ def process_exam_data(input_path: str, output_path: str, merged_output_path: str
     
     groups_df = pd.DataFrame(all_groups).sort_values(["Shift", "Campus", "Group ID"]).reset_index(drop=True)
     merges_df = pd.DataFrame(all_merges).sort_values(["Shift", "Campus", "To Room", "From Room"]).reset_index(drop=True)
-    merged_rooms_df = pd.DataFrame(all_merged_rooms).sort_values(["Shift", "Campus", "Room"]).reset_index(drop=True)
     stats_df = pd.DataFrame(all_stats).sort_values(["Shift", "Campus"]).reset_index(drop=True)
     changes_df = pd.DataFrame(all_room_changes).sort_values(["Shift", "Campus"]).reset_index(drop=True)
     
     # Write output files
     output_main = Path(output_path)
-    output_merged = Path(merged_output_path)
+    
+    # Ensure output directory exists
+    output_main.parent.mkdir(parents=True, exist_ok=True)
     
     with pd.ExcelWriter(output_main, engine="openpyxl") as writer:
         summary_by_shift.to_excel(writer, sheet_name="Summary", index=False)
@@ -775,16 +784,12 @@ def process_exam_data(input_path: str, output_path: str, merged_output_path: str
         merges_df.to_excel(writer, sheet_name="Merges", index=False)
         stats_df.to_excel(writer, sheet_name="MILP_Stats", index=False)
     
-    with pd.ExcelWriter(output_merged, engine="openpyxl") as writer:
-        merged_rooms_df.to_excel(writer, sheet_name="MergedRooms", index=False)
-    
     elapsed_time = time.perf_counter() - start_time
     
     print(f"\n{'='*70}")
     print(f"SUCCESS: Processing completed in {elapsed_time:.2f} seconds")
     print(f"{'='*70}")
     print(f"Main output:   {output_main}")
-    print(f"Merged output: {output_merged}")
     print(f"{'='*70}\n")
 
 
@@ -861,7 +866,6 @@ Examples:
     process_exam_data(
         input_path=args.input,
         output_path=args.output,
-        merged_output_path=args.merged_out,
         sheet_name=sheet_name,
         size_threshold=args.threshold,
         time_limit=args.time_limit,
