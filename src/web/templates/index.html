@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Merging Application - Advanced Optimization Platform</title>
+    <meta name="description"
+        content="Professional room merging optimization platform with advanced analytics and real-time processing capabilities">
+    <link rel="stylesheet" href="/static/app.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Welcome Page -->
+    <div id="welcomePage" class="welcome-page">
+        <div class="welcome-background"></div>
+        <div class="welcome-content">
+            <div class="welcome-logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
+                </svg>
+            </div>
+
+            <h1 class="welcome-title">
+                Welcome to <span class="welcome-title-gradient">Room Merging</span>
+            </h1>
+
+            <p class="welcome-subtitle">Room Optimization Platform</p>
+
+            <p class="welcome-description">
+                Professional room optimization system for educational institutions.
+                Upload your data and get optimization results.
+            </p>
+
+            <button class="welcome-cta" onclick="enterApplication()">
+                <span>Get Started</span>
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="app-container hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-brand">
+                    <div class="header-logo">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
+                        </svg>
+                    </div>
+                    <div class="header-text">
+                        <h1 class="app-title">Room Merging Application</h1>
+                        <p class="app-subtitle">Room Optimization Platform</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="newUploadBtn" class="btn btn-secondary btn-sm hidden" onclick="resetApp()">
+                        <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+                        </svg>
+                        <span>New Upload</span>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="resetToWelcome()">
+                        <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                        </svg>
+                        <span>Home</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Upload Section -->
+            <section id="uploadSection" class="section upload-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        Step 1: Upload Data File
+                    </h2>
+                    <p class="section-description">Select your Excel (.xlsx) or CSV (.csv) file containing room data</p>
+                </div>
+
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" accept=".xlsx, .csv" hidden>
+                    <div class="upload-row">
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                            </svg>
+                            Choose File
+                        </button>
+                        <p class="upload-subtitle">or drag and drop here</p>
+                    </div>
+                </div>
+
+                <div id="fileInfo" class="file-info hidden">
+                    <div class="file-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+                        </svg>
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name" id="fileName"></div>
+                        <div class="file-size" id="fileSize"></div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="clearFile()">Remove</button>
+                </div>
+            </section>
+
+            <!-- Process Section -->
+            <section id="processSection" class="section process-section hidden">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        Step 2: Run Merging Process
+                    </h2>
+                    <p class="section-description">Execute the room optimization algorithm to merge rooms</p>
+                </div>
+
+                <button id="startBtn" class="btn btn-success" onclick="startMerging()">
+                    <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                    Start Merging Process
+                </button>
+
+                <div id="processingState" class="processing-state hidden">
+                    <div class="spinner"></div>
+                    <p class="processing-text">Processing your data</p>
+                    <p class="processing-subtext">Analyzing and optimizing room allocations</p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="section results-section hidden">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        Optimization Results
+                    </h2>
+                    <p class="section-description">Room merging optimization summary</p>
+                </div>
+
+                <!-- Overall Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-primary">
+                        <div class="stat-label">Initial Rooms</div>
+                        <div class="stat-value" id="initialRooms">-</div>
+                    </div>
+                    <div class="stat-card stat-success">
+                        <div class="stat-label">Final Rooms</div>
+                        <div class="stat-value" id="finalRooms">-</div>
+                    </div>
+                    <div class="stat-card stat-info">
+                        <div class="stat-label">Rooms Saved</div>
+                        <div class="stat-value" id="roomsSaved">-</div>
+                    </div>
+                    <div class="stat-card stat-accent">
+                        <div class="stat-label">Efficiency</div>
+                        <div class="stat-value" id="efficiency">-</div>
+                    </div>
+                </div>
+
+                <!-- Detailed Breakdown -->
+                <div class="details-header">
+                    <h3 class="details-title">Breakdown by Shift and Campus</h3>
+                </div>
+
+                <!-- Filter Controls -->
+                <div class="result-controls">
+                    <div class="search-box">
+                        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Search rooms, subjects..."
+                            oninput="filterAndRender()">
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="campusFilter" class="filter-select" onchange="filterAndRender()">
+                            <option value="ALL">All Campuses</option>
+                        </select>
+
+                        <select id="sortFilter" class="filter-select" onchange="filterAndRender()">
+                            <option value="shift_asc">Shift: Earliest to Latest</option>
+                            <option value="shift_desc">Shift: Latest to Earliest</option>
+                            <option value="saved_desc">Most Saved Rooms</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="detailsContainer" class="details-container">
+                    <!-- Details will be populated by JavaScript -->
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <!-- Moved to Header -->
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <section id="errorSection" class="section error-section hidden">
+                <div class="error-content">
+                    <div class="error-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+                        </svg>
+                    </div>
+                    <h3 class="error-title">Error Occurred</h3>
+                    <p class="error-message" id="errorMessage"></p>
+                    <button class="btn btn-primary btn-lg" onclick="resetApp()">
+                        <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+                        </svg>
+                        Try Again
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <p>Room Merging Optimization System | HCMUT Research Project</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
