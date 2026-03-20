@@ -1,0 +1,398 @@
+# IPL Room Merging Optimization System — System Diagrams
+
+> **Project**: `ipl-room-optimizer`
+> **Codebase Path**: `c:\Users\ASUS ZENBOOK\Desktop\HCMUT\Research\Hieu`
+> **Analysis Date**: 2026-03-10
+> **Source**: All diagrams derived strictly from actual source code inspection
+
+---
+
+## Color Legend
+
+| Color | Hex | Usage |
+|:------|:----|:------|
+| 🔵 Blue | `#2563EB` | Core system components (solvers, pipeline, server) |
+| 🟢 Green | `#10B981` | Supporting services & infrastructure (I/O, libraries, data stores) |
+| 🟣 Purple | `#6366F1` | Users & external systems (browser, terminal) |
+
+---
+
+## 1. Architecture Diagram
+
+> Shows the overall system architecture: client layer, backend services, APIs, database (file system), and external libraries — all derived from the codebase.
+
+![Architecture Diagram — IPL Room Merging Optimization System](C:\Users\ASUS ZENBOOK\.gemini\antigravity\brain\281b74ca-2b27-4c3e-90a2-1be9dd6e4054\architecture_diagram_1773137610987.png)
+
+### Layer Breakdown with Code Traceability
+
+#### Layer 1 — User Layer (Purple)
+
+| Component | Description | Code Reference |
+|:----------|:------------|:---------------|
+| **University Admin** | External user (exam coordinator) | *(External actor)* |
+| **Web Browser** | Accesses `http://localhost:5000` | [run.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/run.py) → `webbrowser.open()` |
+| **CLI Terminal** | Direct command-line execution | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) → `main()` (L800-L873) |
+
+#### Layer 2 — Application Layer (Blue)
+
+| Component | Tech | Routes / Interface | Code Reference |
+|:----------|:-----|:-------------------|:---------------|
+| **Flask Web Server** | Flask + CORS | `GET /`, `POST /api/upload`, `POST /api/merge`, `GET /api/status/<id>`, `GET /results/<file>` | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) → `app = Flask(__name__)` (L20) |
+| **CLI Entry Point** | argparse | `-i`, `-o`, `--threshold`, `--time-limit`, `--verbose` | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) → `main()` (L800) |
+| **Background Worker** | `threading.Thread` | Spawned per optimization task | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) → `optimization_worker()` (L37) |
+
+#### Layer 3 — Processing Engine (Blue)
+
+| Component | Algorithm | Complexity | Code Reference |
+|:----------|:----------|:-----------|:---------------|
+| **Pipeline Controller** | Data ingestion → Partitioning → Solver routing → Aggregation → Reporting | O(G × N²) per group | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) → `process_exam_data()` (L552-L793) |
+| **MILPRoomOptimizer** | ILP via PuLP + CBC (Branch-and-Bound) | Exponential (bounded by time_limit) | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) → `MILPRoomOptimizer` class (L230-L436) |
+| **GreedyBinPacker** | Multi-Pass Best-Fit / First-Fit / Worst-Fit | O(S × N²), S=5 strategies | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) → `GreedyBinPacker` class (L82-L223) |
+
+> [!IMPORTANT]
+> **Adaptive Solver Selection**: If `group_size > size_threshold`, the system routes to `GreedyBinPacker`. Otherwise, it uses `MILPRoomOptimizer`. If MILP fails, it automatically falls back to the heuristic solver.
+
+#### Layer 4 — Infrastructure / I/O (Green)
+
+| Component | Type | Content | Code Reference |
+|:----------|:-----|:--------|:---------------|
+| **uploads/** | File storage | Input `.xlsx` / `.csv` files | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) → `UPLOAD_FOLDER` (L30) |
+| **results/** | File storage | Output `Result_*.xlsx` workbooks | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) → `RESULTS_FOLDER` (L31) |
+| **PuLP + CBC** | External library | LP/MILP modeling + Coin-OR solver | `import pulp` in [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) (L24) |
+| **Pandas + OpenPyXL** | External library | Data processing + Excel I/O | `import pandas` in [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) (L23) |
+
+---
+
+## 2. Component Diagram
+
+> Shows internal modules, services, classes, and their relationships based on the real project structure.
+
+![Component Diagram — IPL Room Merging Optimization System](C:\Users\ASUS ZENBOOK\.gemini\antigravity\brain\281b74ca-2b27-4c3e-90a2-1be9dd6e4054\component_diagram_1773137559275.png)
+
+### Module-Level Component Map
+
+#### Entry Points
+
+```
+┌─────────────────────────────────────────────────────┐
+│  run.py (root)                                      │
+│  ├─ imports: src.web.server → app                   │
+│  ├─ open_browser() → webbrowser.open(localhost:5000)│
+│  └─ app.run(host='0.0.0.0', port=5000)             │
+├─────────────────────────────────────────────────────┤
+│  src/ipl_optimizer.py → main() [CLI entry]          │
+│  ├─ argparse: -i, -o, --threshold, --time-limit     │
+│  └─ calls process_exam_data() directly              │
+└─────────────────────────────────────────────────────┘
+```
+
+#### Web Module: `src/web/`
+
+| File | Components | Code Reference |
+|:-----|:-----------|:---------------|
+| [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) | `app` (Flask), `CORS`, `TASK_STATUS` (dict), route handlers, `optimization_worker()`, `export_results_to_json()` | L1-L381 |
+| [index.html](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/templates/index.html) | Welcome page, Upload section, Process section, Results section, Modals | L1-L339 |
+| [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) | `appState`, `uploadFile()`, `startMerging()`, `pollTaskStatus()`, `showResults()`, `filterAndRender()`, `showRoomDetail()`, `createMergeModal()` | L1-L809 |
+| [app.css](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.css) | Full styling with dark mode support, Inter font | 55,518 bytes |
+| [hcmut.svg](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/hcmut.svg) | University logo asset | SVG |
+
+**Flask Route Map:**
+
+| Method | Endpoint | Handler | Purpose |
+|:-------|:---------|:--------|:--------|
+| `GET` | `/` | `index()` | Serve main HTML page |
+| `POST` | `/api/upload` | `upload_file()` | Accept `.xlsx`/`.csv` uploads (max 16MB) |
+| `POST` | `/api/merge` | `merge()` | Start background optimization task |
+| `GET` | `/api/status/<task_id>` | `get_task_status()` | Poll task progress |
+| `GET` | `/results/<filename>` | `download_result()` | Download result Excel file |
+
+#### Core Optimizer: `src/ipl_optimizer.py` (878 lines)
+
+| Component | Type | Key Methods | Lines |
+|:----------|:-----|:------------|:------|
+| `identify_column()` | Utility function | Case-insensitive column matching | L31-L55 |
+| `validate_room_data()` | Utility function | Students ≤ capacity check | L58-L75 |
+| `GreedyBinPacker` | Class | `__init__()`, `solve()` with `try_best_fit()`, `try_first_fit()`, `try_worst_fit()`, `count_open()` | L82-L223 |
+| `MILPRoomOptimizer` | Class | `__init__()`, `_build_feasible_edges()`, `_create_subject_index()`, `solve()` | L230-L436 |
+| `generate_output_reports()` | Function | Groups, Merges, MergedRooms, RoomChanges report builder | L443-L545 |
+| `process_exam_data()` | Function (Pipeline) | Full ingestion → solving → reporting pipeline | L552-L793 |
+| `main()` | Function (CLI) | argparse interface | L800-L873 |
+
+#### Core Module: `src/core/`
+
+| File | Components | Code Reference |
+|:-----|:-----------|:---------------|
+| [merging.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/core/merging.py) | `pick_col()`, `solve_group_greedy()`, `solve_group_exact_milp_pulp()`, `build_outputs_for_group()`, `main()` | L1-L486 |
+
+> [!NOTE]
+> `src/core/merging.py` is an **older standalone version** of the optimization pipeline (486 lines). It contains its own argparse CLI and a full processing pipeline (`main()`). Its functions were refactored into the newer `src/ipl_optimizer.py` with object-oriented classes and enhanced strategies.
+
+#### Utility Modules
+
+| Module | Function | Purpose | Code Reference |
+|:-------|:---------|:--------|:---------------|
+| [show_summary.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/cli/show_summary.py) | `display_summary()` | Reads result Excel, prints formatted console summary | L8-L58 |
+| [export_to_json.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/utils/export_to_json.py) | `export_to_json()` | Converts result Excel to JSON for web visualization | L9-L65 |
+
+#### Data Stores & Archives
+
+| Directory | Contents | Purpose |
+|:----------|:---------|:--------|
+| `uploads/` | `input_data.xlsx`, `input_data.csv` | Uploaded input files |
+| `results/` | `Result_YYYY-MM-DD_HH-MM-SS.xlsx` (8 files) | Optimizer output workbooks |
+| `experiments/` | `PA1-A/` through `PA4-C/` (15 subdirectories) | Test datasets |
+| `archives/` | `merging.py`, `heuristic.py`, `*.xlsx` | Legacy code and data |
+| `documents/` | `ILP_F.pdf`, `ipl.pdf`, `ipl_extracted.txt`, `meeting_timeline.docx` | Research papers |
+
+### Dependency Graph (Mermaid)
+
+```mermaid
+graph TD
+    subgraph "Entry Points"
+        RUN["run.py"]
+        CLI["CLI: ipl_optimizer.py → main()"]
+    end
+
+    subgraph "Web Layer"
+        SRV["server.py<br/>Flask App"]
+        HTML["index.html"]
+        JS["app.js"]
+        CSS["app.css"]
+    end
+
+    subgraph "Core Optimizer"
+        PIPE["process_exam_data()"]
+        MILP["MILPRoomOptimizer"]
+        GREEDY["GreedyBinPacker"]
+        REPORT["generate_output_reports()"]
+        VALID["validate_room_data()"]
+        IDCOL["identify_column()"]
+    end
+
+    subgraph "Utility"
+        SUMM["show_summary.py"]
+        EXPORT["export_to_json.py"]
+    end
+
+    subgraph "Standalone Core"
+        CORE["src/core/merging.py"]
+    end
+
+    subgraph "Data"
+        UP["uploads/"]
+        RES["results/"]
+    end
+
+    subgraph "External Libs"
+        PULP["PuLP + CBC"]
+        PD["Pandas + OpenPyXL"]
+    end
+
+    RUN -->|"imports app"| SRV
+    SRV -->|"serves"| HTML
+    HTML -->|"loads"| JS
+    HTML -->|"loads"| CSS
+    SRV -->|"subprocess call"| PIPE
+    CLI -->|"direct call"| PIPE
+    PIPE -->|"size ≤ threshold"| MILP
+    PIPE -->|"size > threshold"| GREEDY
+    MILP -.->|"fallback"| GREEDY
+    PIPE --> IDCOL
+    PIPE --> VALID
+    PIPE --> REPORT
+    REPORT -->|"writes"| RES
+    SRV -->|"reads"| RES
+    SRV -->|"saves"| UP
+    PIPE -->|"reads"| UP
+    MILP --> PULP
+    PIPE --> PD
+    SUMM -->|"reads"| RES
+    EXPORT -->|"reads"| RES
+```
+
+---
+
+## 3. User Interaction Diagram
+
+> Shows how users interact with the system and how requests flow through the main components.
+
+![User Interaction Flow — IPL Room Merging Optimization System](C:\Users\ASUS ZENBOOK\.gemini\antigravity\brain\281b74ca-2b27-4c3e-90a2-1be9dd6e4054\user_interaction_diagram_1773137577412.png)
+
+### Flow Path A — Web Interface (Primary)
+
+```mermaid
+sequenceDiagram
+    actor User as University Admin
+    participant Browser as Web Browser
+    participant Flask as Flask Server<br/>src/web/server.py
+    participant Worker as Background Thread<br/>optimization_worker()
+    participant Engine as IPL Optimizer<br/>src/ipl_optimizer.py
+    participant FS as File System<br/>uploads/ & results/
+
+    User->>Browser: Open localhost:5000
+    Browser->>Flask: GET /
+    Flask-->>Browser: index.html (Welcome Page)
+    User->>Browser: Click "Enter Application"
+
+    Note over User,Browser: Step 1: Upload Data File
+
+    User->>Browser: Drag & drop .xlsx/.csv file
+    Browser->>Flask: POST /api/upload (multipart)
+    Flask->>FS: Save to uploads/input_data.xlsx
+    Flask-->>Browser: { success: true, filepath }
+
+    Note over User,Browser: Step 2: Select Mode & Start
+
+    User->>Browser: Select Fast / Deep mode
+    User->>Browser: Click "Start Merging"
+    Browser->>Flask: POST /api/merge { filepath, mode }
+    Flask->>Worker: Spawn thread (task_id = UUID)
+    Flask-->>Browser: { task_id }
+
+    Note over Worker,Engine: Step 3: Background Processing
+
+    Worker->>Engine: subprocess: python ipl_optimizer.py -i ... -o ...
+    Engine->>FS: Read input file (Pandas)
+    Engine->>Engine: process_exam_data()
+    loop For each (Shift, Campus) group
+        alt size ≤ threshold
+            Engine->>Engine: MILPRoomOptimizer.solve()
+        else size > threshold
+            Engine->>Engine: GreedyBinPacker.solve()
+        end
+    end
+    Engine->>FS: Write Result_*.xlsx
+    Worker->>Worker: export_results_to_json()
+
+    Note over Browser,Flask: Step 4: Poll Progress
+
+    loop Every 1 second
+        Browser->>Flask: GET /api/status/<task_id>
+        Flask-->>Browser: { progress, message }
+    end
+    Flask-->>Browser: { status: completed, result: JSON }
+
+    Note over User,Browser: Step 5: View & Download Results
+
+    Browser->>Browser: Render summary cards, detail cards
+    User->>Browser: Filter by Shift / Campus
+    User->>Browser: Click room tags for details
+    User->>Browser: Click "Download Excel"
+    Browser->>Flask: GET /results/Result_*.xlsx
+    Flask->>FS: Read result file
+    Flask-->>Browser: Excel file download
+```
+
+### Flow Path B — Command Line Interface (Alternate)
+
+| Step | User Action | System Response | Code Reference |
+|:-----|:------------|:----------------|:---------------|
+| **1** | Run: `python src/ipl_optimizer.py -i input.xlsx -o output.xlsx --verbose` | Parse arguments via argparse | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) → `main()` (L800) |
+| **2** | *(Automatic)* | Load Excel/CSV, identify columns, validate data | `process_exam_data()` (L552) |
+| **3** | *(Automatic)* | Group by Shift + Campus, route to MILP or Greedy solver | `process_exam_data()` → solver selection (L701-L728) |
+| **4** | *(Automatic)* | Console output: `Processing [i/N]: shift=..., rooms=...` | Verbose logging (L698-L699) |
+| **5** | *(Automatic)* | Write multi-sheet Excel workbook | `pd.ExcelWriter` (L779-L785) |
+| **6** | *(Optional)* Run: `python src/cli/show_summary.py results/output.xlsx` | Print formatted summary to console | [show_summary.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/cli/show_summary.py) → `display_summary()` (L8) |
+| **7** | *(Optional)* Run: `python src/utils/export_to_json.py results/output.xlsx` | Export JSON for web interface | [export_to_json.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/utils/export_to_json.py) → `export_to_json()` (L9) |
+
+### Web UI Interaction Map
+
+| UI Section | User Actions | JavaScript Functions | Code Reference |
+|:-----------|:-------------|:--------------------|:---------------|
+| **Welcome Page** | Click "Enter Application" | `enterApplication()` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) L9-L14 |
+| **Upload Section** | Drag/drop or click to select file | `handleFile()`, `uploadFile()` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) L87-L142 |
+| **Process Section** | Select mode, click Start | `startMerging()` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) L154-L195 |
+| **Progress** | View real-time progress bar | `pollTaskStatus()` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) L197-L229 |
+| **Results** | View summary cards, filter by shift/campus | `showResults()`, `filterAndRender()` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) L231-L342 |
+| **Room Details** | Click room tags for popup | `showRoomDetail()` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) L450-L607 |
+| **Merge Modal** | Click "Show Merge Details" | `showMergeDetail()`, `createMergeModal()` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) L694-L805 |
+| **Dark Mode** | Toggle dark/light theme | `toggleDarkMode()` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) L28-L33 |
+| **Reset** | Click Home or New Upload | `resetApp()`, `resetToWelcome()` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) L639-L669 |
+
+---
+
+## Appendix: Complete Project File Map
+
+```
+ipl-room-optimizer/
+├── run.py                          # Web app entry point (30 lines)
+├── README.md                       # System documentation (66 lines)
+├── report.md                       # Technical audit report (131 lines)
+│
+├── src/
+│   ├── __init__.py                 # Package marker
+│   ├── ipl_optimizer.py            # ★ Main optimizer (878 lines)
+│   │   ├── identify_column()           # Column matching utility
+│   │   ├── validate_room_data()        # Data validation
+│   │   ├── GreedyBinPacker             # Heuristic solver class
+│   │   ├── MILPRoomOptimizer           # Exact ILP solver class
+│   │   ├── generate_output_reports()   # Report generation
+│   │   ├── process_exam_data()         # Pipeline controller
+│   │   └── main()                      # CLI entry point
+│   │
+│   ├── core/
+│   │   ├── __init__.py
+│   │   └── merging.py              # Standalone optimizer (486 lines)
+│   │       ├── pick_col()
+│   │       ├── solve_group_greedy()
+│   │       ├── solve_group_exact_milp_pulp()
+│   │       ├── build_outputs_for_group()
+│   │       └── main()
+│   │
+│   ├── cli/
+│   │   ├── __init__.py
+│   │   └── show_summary.py         # Console summary display (64 lines)
+│   │       └── display_summary()
+│   │
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   └── export_to_json.py       # Excel→JSON converter (72 lines)
+│   │       └── export_to_json()
+│   │
+│   └── web/
+│       ├── __init__.py
+│       ├── server.py               # Flask backend (381 lines)
+│       │   ├── optimization_worker()
+│       │   ├── export_results_to_json()
+│       │   ├── index()                  GET /
+│       │   ├── upload_file()            POST /api/upload
+│       │   ├── merge()                  POST /api/merge
+│       │   ├── get_task_status()        GET /api/status/<id>
+│       │   └── download_result()        GET /results/<file>
+│       │
+│       ├── templates/
+│       │   └── index.html          # Main UI template (339 lines)
+│       │
+│       └── static/
+│           ├── app.js              # Frontend SPA logic (809 lines)
+│           ├── app.css             # Full styling + dark mode (55,518 bytes)
+│           ├── utilities.css       # Utility classes (66 bytes)
+│           └── hcmut.svg           # University logo (24,981 bytes)
+│
+├── uploads/                        # Input data storage
+│   ├── input_data.csv
+│   └── input_data.xlsx
+│
+├── results/                        # Output results (8 Excel files)
+│   └── Result_YYYY-MM-DD_*.xlsx
+│
+├── experiments/                    # Test datasets (15 subdirectories)
+│   ├── PA1-A/ through PA1-C/
+│   ├── PA2-A/ through PA2-C/
+│   ├── PA3-A/ through PA3-C/
+│   └── PA4-A/ through PA4-C/
+│
+├── archives/                       # Legacy implementations
+│   ├── merging.py                  # Old exact solver
+│   ├── heuristic.py                # Old heuristic solver
+│   └── *.xlsx                      # Historical data files
+│
+└── documents/                      # Research references
+    ├── ILP_F.pdf                   # ILP specification paper
+    ├── ipl.pdf                     # Research paper
+    ├── ipl_extracted.txt           # Extracted text
+    └── meeting_timeline.docx       # Meeting notes
+```
+
+> [!TIP]
+> The primary optimization engine lives entirely in `src/ipl_optimizer.py` (878 lines). The `src/core/merging.py` (486 lines) is an older refactored version retained for reference. Both implement the same ILP model from `ILP_F.pdf`.

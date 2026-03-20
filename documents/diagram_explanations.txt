@@ -1,0 +1,367 @@
+# Technical Explanation of System Diagrams
+
+> **Project**: IPL Room Merging Optimization System (`ipl-room-optimizer`)
+> **Codebase**: `c:\Users\ASUS ZENBOOK\Desktop\HCMUT\Research\Hieu`
+> **Date**: 2026-03-10
+> **Basis**: Explanations derived strictly from generated diagrams and actual source code
+
+---
+
+## Diagram 1 — Architecture Diagram
+
+### 1. Diagram Name
+
+**IPL Room Optimizer — Architecture Diagram**
+
+### 2. Purpose of the Diagram
+
+This diagram presents the **overall system architecture** of the IPL Room Merging Optimization System. It illustrates how the system is organized into distinct horizontal layers, from the user-facing interface at the top down to the infrastructure and I/O services at the bottom. The purpose is to give a complete picture of what components exist, how they are grouped, and how data flows between the layers during an optimization run.
+
+### 3. Main Components
+
+| Component | Layer | Role |
+|:----------|:------|:-----|
+| **University Admin** | User | The external actor who provides exam data and consumes optimization results. |
+| **Web Browser** | User | Accesses the Flask web application at `http://localhost:5000`. Provides a graphical interface for uploading files, triggering optimization, and viewing results. |
+| **CLI Terminal** | User | An alternative entry point where the user runs the optimizer directly via command-line arguments. |
+| **Flask Web Server** | Application | A Python Flask application that exposes five HTTP endpoints. It handles file uploads, starts background optimization tasks, reports progress, and serves result files. |
+| **CLI Entry Point** | Application | An argparse-based command-line interface built into `ipl_optimizer.py`. It accepts input/output paths, solver threshold, time limit, and verbosity flags. |
+| **Pipeline Controller** | Processing Engine | The central orchestration function `process_exam_data()`. It reads input data, partitions it by exam shift and campus, selects the appropriate solver for each partition, and aggregates results into a multi-sheet Excel report. |
+| **MILPRoomOptimizer** | Processing Engine | An exact Integer Linear Programming solver. It formulates the room merging problem as a binary optimization model and solves it using the CBC (Coin-OR Branch-and-Cut) solver via PuLP. Used for small-to-medium datasets. |
+| **GreedyBinPacker** | Processing Engine | A heuristic solver that uses a multi-pass constructive approach. It runs five bin-packing strategies (Best-Fit ascending, Best-Fit descending, First-Fit descending, Worst-Fit descending, Best-Fit by capacity) and selects the result with the fewest open rooms. Used for large datasets or as a fallback. |
+| **uploads/** | Infrastructure | Local directory for storing uploaded input files (`.xlsx` or `.csv`). |
+| **results/** | Infrastructure | Local directory for storing output Excel workbooks with multiple report sheets. |
+| **PuLP + CBC** | Infrastructure | External Python library for mathematical programming. PuLP defines the model; CBC solves it. |
+| **Pandas + OpenPyXL** | Infrastructure | External libraries for data processing (Pandas) and Excel file reading/writing (OpenPyXL). |
+
+### 4. System Workflow
+
+The architecture diagram shows two parallel execution paths that converge at the Processing Engine layer.
+
+**Web path:**
+1. The University Admin opens a web browser and navigates to `localhost:5000`.
+2. The Flask Web Server serves the HTML page.
+3. The user uploads an Excel or CSV file via `POST /api/upload`.
+4. The user selects a mode (Fast or Deep) and triggers `POST /api/merge`.
+5. The server spawns a background thread that launches the optimizer as a subprocess.
+6. The browser polls `GET /api/status/<task_id>` to track progress.
+7. The Pipeline Controller reads the input file, partitions data, and routes each group to the appropriate solver.
+8. Results are written to an Excel workbook in `results/`.
+9. The server parses the Excel output into JSON and returns it to the browser.
+10. The user views results and optionally downloads the Excel file via `GET /results/<filename>`.
+
+**CLI path:**
+1. The user runs `python src/ipl_optimizer.py -i input.xlsx -o output.xlsx` from a terminal.
+2. The `main()` function parses arguments and calls `process_exam_data()` directly.
+3. The same Pipeline Controller logic executes.
+4. Results are written to the specified output path.
+
+Both paths share the same Processing Engine and Infrastructure layers.
+
+### 5. Technologies and Technical Aspects
+
+- **Python 3.x** — Core language for all backend logic.
+- **Flask** — Lightweight web framework. Configured with CORS support via `flask_cors`.
+- **PuLP** — Python LP/MILP modeler. Used to define binary decision variables (`y_vars`, `x_vars`), the objective function (minimize open rooms), and linear constraints (capacity, assignment uniqueness, subject disjointness).
+- **CBC (Coin-OR Branch-and-Cut)** — Open-source MILP solver invoked through `pulp.PULP_CBC_CMD`. Configured with a time limit parameter to prevent indefinite execution.
+- **Pandas** — Used for reading Excel/CSV files, column manipulation, grouping by shift/campus, and writing multi-sheet output workbooks.
+- **OpenPyXL** — Backend engine for Pandas Excel I/O.
+- **threading** — Python standard library used to run optimization tasks in background threads within the Flask server.
+- **subprocess** — Used by the web server's `optimization_worker()` to invoke the optimizer as a separate Python process with unbuffered stdout for real-time progress capture.
+- **argparse** — Standard library used for the CLI interface.
+
+### 6. Code References
+
+| Diagram Component | File | Class / Function | Lines |
+|:------------------|:-----|:-----------------|:------|
+| Flask Web Server | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) | `app = Flask(__name__)` | L20 |
+| Background Worker | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) | `optimization_worker()` | L37–L148 |
+| CLI Entry Point | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `main()` | L800–L873 |
+| Pipeline Controller | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `process_exam_data()` | L552–L793 |
+| MILPRoomOptimizer | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `MILPRoomOptimizer` class | L230–L436 |
+| GreedyBinPacker | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `GreedyBinPacker` class | L82–L223 |
+| Web App Launcher | [run.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/run.py) | `open_browser()`, `app.run()` | L10–L29 |
+| Upload Storage | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) | `UPLOAD_FOLDER` | L30 |
+| Results Storage | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) | `RESULTS_FOLDER` | L31 |
+
+### 7. Key Technical Observations
+
+- **Dual-interface architecture.** The system provides two independent entry points (web and CLI) that both converge on the same optimization pipeline. This is a clean separation of interface from logic.
+- **Adaptive solver selection.** The pipeline controller uses a size threshold to decide between the exact solver and the heuristic. This is a practical design choice — exact MILP is too slow for large datasets, while the heuristic sacrifices optimality for speed.
+- **Automatic degradation.** If the MILP solver fails (timeout or error), the system catches the exception and falls back to the greedy heuristic. This ensures the process never stalls.
+- **Subprocess isolation.** The web server runs the optimizer as a subprocess rather than calling Python functions directly. This isolates the optimization workload from the Flask process and enables real-time stdout-based progress tracking.
+- **File-based data exchange.** The system uses local file storage (`uploads/`, `results/`) instead of a database. Input and output are Excel workbooks. There is no database present in the codebase.
+- **No authentication.** The Flask server does not implement login, session management, or access control. It is designed for local or trusted-network usage.
+
+---
+
+## Diagram 2 — Component Diagram
+
+### 1. Diagram Name
+
+**IPL Room Merging Optimization System — Component Diagram**
+
+### 2. Purpose of the Diagram
+
+This diagram maps the **internal software modules**, their classes, functions, and the relationships between them. It shows how the codebase is organized into packages (`src/web/`, `src/core/`, `src/cli/`, `src/utils/`) and how data flows between these modules during execution. The purpose is to reveal the internal structure of the project at the code level.
+
+### 3. Main Components
+
+#### Entry Points
+
+| Component | Description |
+|:----------|:------------|
+| **run.py** | Root-level script that imports the Flask app from `src/web/server.py`, opens a browser window, and starts the Flask development server on port 5000. |
+| **CLI: ipl_optimizer.py → main()** | An argparse-based command line interface within the optimizer module. Parses `-i`, `-o`, `--threshold`, `--time-limit`, `--verbose` and calls `process_exam_data()` directly. |
+
+#### Web Module (`src/web/`)
+
+| Component | Description |
+|:----------|:------------|
+| **server.py** | Flask application with 5 route handlers, a background optimization worker using `threading.Thread`, a global `TASK_STATUS` dictionary for task state, and an `export_results_to_json()` function that parses Excel results into JSON. |
+| **index.html** | Single-page HTML template served by Flask. Contains Welcome page, Upload section, Process section (mode selection), Progress section, and Results section with modal popups. |
+| **app.js** | Frontend JavaScript (809 lines). Manages application state, file upload via fetch API, task polling, result rendering with filters, room detail popups, and dark mode toggling. |
+| **app.css** | Stylesheet (55,518 bytes). Implements full visual design with Inter font, dark mode support, gradients, and responsive layout. |
+| **hcmut.svg** | HCMUT university logo used as favicon and header branding. |
+
+#### Core Optimizer (`src/ipl_optimizer.py`)
+
+| Component | Type | Description |
+|:----------|:-----|:------------|
+| **identify_column()** | Utility function | Matches column names in the input DataFrame against a list of candidates using case-insensitive comparison. Supports multiple naming conventions (Vietnamese, English, coded). |
+| **validate_room_data()** | Utility function | Verifies that no room has more students than its capacity. Raises `ValueError` if violated. |
+| **GreedyBinPacker** | Class | Heuristic solver that initializes each room as self-assigned, then attempts to merge rooms using 5 sorting strategies across 3 algorithms (Best-Fit, First-Fit, Worst-Fit). Selects the result with the minimum number of open rooms. |
+| **MILPRoomOptimizer** | Class | Exact solver that constructs a PuLP MILP model with binary variables for room open status (`y_vars`) and assignment decisions (`x_vars`). Enforces constraints C1–C4 from the ILP specification plus subject disjointness. Solves via CBC with a configurable time limit. |
+| **generate_output_reports()** | Function | Takes solver results (assignment mapping, open room indices) and produces structured data for Groups, Merges, MergedRooms, and RoomChanges report sheets. |
+| **process_exam_data()** | Function | Main pipeline controller. Reads input, identifies columns, validates data, groups by shift + campus, routes each group to MILP or Greedy solver, aggregates results, and writes a multi-sheet Excel workbook. |
+
+#### Core Module (`src/core/`)
+
+| Component | Description |
+|:----------|:------------|
+| **merging.py** | An older standalone version (486 lines) of the optimization pipeline. Contains `pick_col()`, `solve_group_greedy()`, `solve_group_exact_milp_pulp()`, `build_outputs_for_group()`, and its own `main()` with argparse. This module is retained in the codebase but is not imported or used by the web server or the primary `ipl_optimizer.py`. |
+
+#### Utility Modules
+
+| Component | Description |
+|:----------|:------------|
+| **src/cli/show_summary.py** | Post-processing script. Reads a result Excel file and prints a formatted text summary to the console (overall statistics + breakdown by shift/campus). |
+| **src/utils/export_to_json.py** | Post-processing script. Reads a result Excel file and writes a JSON file for potential web visualization use. |
+
+#### Data Stores
+
+| Component | Description |
+|:----------|:------------|
+| **uploads/** | Contains uploaded input files (`input_data.xlsx`, `input_data.csv`). |
+| **results/** | Contains output Excel workbooks with timestamped filenames (`Result_YYYY-MM-DD_HH-MM-SS.xlsx`). |
+| **experiments/** | Contains 15 test dataset directories (PA1-A through PA4-C). |
+| **archives/** | Contains legacy Python scripts (`merging.py`, `heuristic.py`) and historical data files. |
+| **documents/** | Contains research papers (`ILP_F.pdf`, `ipl.pdf`) and meeting notes. |
+
+### 4. System Workflow
+
+Based on the component diagram, the internal workflow operates as follows:
+
+**Via Web Interface:**
+1. `run.py` imports the Flask `app` object from `src/web/server.py` and starts the server.
+2. `server.py` serves `index.html`, which loads `app.js` and `app.css`.
+3. When the user uploads a file, `upload_file()` saves it to `uploads/`.
+4. When the user starts merging, `merge()` spawns a background thread running `optimization_worker()`.
+5. `optimization_worker()` invokes `src/ipl_optimizer.py` as a subprocess with the appropriate command-line arguments.
+6. Inside the subprocess, `main()` parses arguments and calls `process_exam_data()`.
+7. `process_exam_data()` calls `identify_column()` and `validate_room_data()` during data preparation.
+8. For each (shift, campus) group, the function instantiates either `MILPRoomOptimizer` (if group size ≤ threshold) or `GreedyBinPacker` (if group size > threshold).
+9. If `MILPRoomOptimizer.solve()` raises an exception, the pipeline catches it and falls back to `GreedyBinPacker`.
+10. `generate_output_reports()` converts solver results into report data structures.
+11. The pipeline writes results to `results/` as a multi-sheet Excel workbook.
+12. Back in the main process, `optimization_worker()` calls `export_results_to_json()` to parse the Excel output into JSON.
+13. The JSON is stored in `TASK_STATUS` and returned to the browser on the next poll.
+
+**Via CLI:**
+1. The user calls `main()` directly from the terminal.
+2. Steps 6–11 above execute identically.
+3. Optionally, the user runs `show_summary.py` or `export_to_json.py` as separate post-processing steps.
+
+### 5. Technologies and Technical Aspects
+
+- **Flask** — Serves HTML templates via Jinja2 templating and exposes JSON REST API endpoints for file upload, task initiation, progress polling, and result download.
+- **flask_cors (CORS)** — Enables Cross-Origin Resource Sharing on the Flask app. Present in the code at server initialization.
+- **Threading (concurrent execution)** — The web server uses `threading.Thread` with `daemon=True` to run optimization tasks without blocking the main Flask process.
+- **subprocess.Popen** — Used to launch the optimizer as an isolated process. stdout is piped and read line-by-line for real-time progress extraction using regex pattern matching (`Processing [i/N]:`).
+- **uuid** — Generates unique task identifiers for each optimization run.
+- **PuLP** — Provides a Pythonic interface to formulate LP/MILP models. Variables, constraints, and the objective function are defined symbolically. The model is passed to `PULP_CBC_CMD` for solving.
+- **Pandas** — Core data manipulation library. Used for reading/writing Excel/CSV, column selection/renaming, type conversion, grouping with `groupby`, and DataFrame-to-Excel serialization via `ExcelWriter`.
+- **Vanilla JavaScript** — The frontend is built with plain JavaScript (no framework). Uses `fetch()` for API calls, DOM manipulation for rendering, and `setInterval` for task polling.
+- **CSS with dark mode** — The styling uses CSS custom properties and a `[data-theme="dark"]` attribute for theme switching.
+
+### 6. Code References
+
+| Diagram Component | Folder | File | Key Symbols |
+|:------------------|:-------|:-----|:------------|
+| Entry Point (Web) | root | [run.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/run.py) | `open_browser()`, `app.run()` |
+| Entry Point (CLI) | `src/` | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `main()` (L800) |
+| Flask App | `src/web/` | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) | `app`, `optimization_worker()`, `export_results_to_json()`, route handlers |
+| HTML Template | `src/web/templates/` | [index.html](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/templates/index.html) | `welcomePage`, `uploadSection`, `processSection`, `resultsSection` |
+| Frontend Logic | `src/web/static/` | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) | `appState`, `uploadFile()`, `startMerging()`, `pollTaskStatus()`, `showResults()`, `showRoomDetail()` |
+| Styling | `src/web/static/` | [app.css](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.css) | Dark mode, Inter font |
+| Greedy Solver | `src/` | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `GreedyBinPacker` (L82–L223) |
+| Exact Solver | `src/` | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `MILPRoomOptimizer` (L230–L436) |
+| Pipeline | `src/` | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `process_exam_data()` (L552–L793) |
+| Report Builder | `src/` | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `generate_output_reports()` (L443–L545) |
+| Utilities | `src/` | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) | `identify_column()` (L31), `validate_room_data()` (L58) |
+| Standalone Core | `src/core/` | [merging.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/core/merging.py) | `pick_col()`, `solve_group_greedy()`, `solve_group_exact_milp_pulp()`, `main()` |
+| CLI Summary | `src/cli/` | [show_summary.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/cli/show_summary.py) | `display_summary()` (L8) |
+| JSON Export | `src/utils/` | [export_to_json.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/utils/export_to_json.py) | `export_to_json()` (L9) |
+
+### 7. Key Technical Observations
+
+- **Monolithic optimizer module.** The primary optimization logic — both solvers, the pipeline controller, report generation, utilities, and the CLI — all reside within a single file (`ipl_optimizer.py`, 878 lines). This is functional but could become difficult to maintain as the system grows.
+- **Strategy Pattern for solver selection.** The pipeline controller dynamically selects between `MILPRoomOptimizer` and `GreedyBinPacker` based on the `size_threshold` parameter. Both solvers share the same input/output interface (accept rooms/subjects/students/capacities lists and return assignment/open_rooms/metadata tuples), enabling interchangeable use.
+- **Retained legacy code.** `src/core/merging.py` is an older implementation with its own full pipeline. It is present in the codebase but is **not imported or used** by any other module in the active system. Its functions (`solve_group_greedy()`, `solve_group_exact_milp_pulp()`) were refactored into the class-based design of `ipl_optimizer.py`.
+- **Decoupled utility scripts.** `show_summary.py` and `export_to_json.py` operate as standalone post-processing tools. They read the result Excel files independently and are not called by the main pipeline. However, the web server's `export_results_to_json()` duplicates the logic of `export_to_json.py` with enhanced detail (room-level merge tracking).
+- **In-memory task state.** The web server uses a global Python dictionary (`TASK_STATUS = {}`) to track task progress. This state is not persisted — restarting the server loses all task history. This design is appropriate for single-user, local use.
+- **No external database.** The system uses only the local file system for data persistence. There is no SQL or NoSQL database in the codebase.
+
+---
+
+## Diagram 3 — User Interaction Diagram
+
+### 1. Diagram Name
+
+**IPL Room Merging Optimization System — User Interaction Flow**
+
+### 2. Purpose of the Diagram
+
+This diagram traces the **complete user journey** through the system. It shows every step a user takes — from opening the application to downloading results — and maps each step to the specific system component that handles it. The diagram covers both the primary web interface path and the alternative CLI path.
+
+### 3. Main Components
+
+| Component | Role in User Interaction |
+|:----------|:-------------------------|
+| **University Admin** | The actor who initiates the workflow by providing exam scheduling data and requesting room optimization. |
+| **Welcome Page** | The initial landing page displayed when the user opens the application. Contains a branded entry button. |
+| **Upload Section** | The UI area where the user provides an Excel or CSV input file via drag-and-drop or file picker. |
+| **Mode Selection** | The UI provides two optimization modes: Fast (greedy only, `threshold=0`) and Deep (MILP-preferred, `threshold=200`, `time_limit=600`). |
+| **Flask API** | Backend endpoints that process upload (`POST /api/upload`), start optimization (`POST /api/merge`), report progress (`GET /api/status/<id>`), and serve result files (`GET /results/<file>`). |
+| **Background Thread** | A daemon thread spawned by the Flask server that runs the optimization subprocess and captures real-time progress from stdout. |
+| **Optimization Engine** | The `process_exam_data()` pipeline that reads input, groups data, selects solvers, and writes results. |
+| **MILPRoomOptimizer** | Invoked for groups where size ≤ threshold. Solves to optimality (or within time limit). |
+| **GreedyBinPacker** | Invoked for groups where size > threshold, or as fallback when MILP fails. |
+| **Results Display** | The UI section showing summary cards (Initial Rooms, Final Rooms, Rooms Saved, Efficiency %), shift/campus filters, detail cards with room tags, and interactive popups. |
+| **Excel Download** | The user downloads the full multi-sheet result workbook from the server. |
+
+### 4. System Workflow
+
+#### Web Interface Path (Primary)
+
+**Step 1 — Open Application**
+- The user navigates to `http://localhost:5000` in a web browser.
+- Flask serves `index.html` via the `index()` route handler.
+- The Welcome Page is displayed with the HCMUT logo and an "Enter Application" button.
+- Clicking the button calls `enterApplication()` in `app.js`, which hides the welcome page and shows the main application.
+
+**Step 2 — Upload Data File**
+- The user drags and drops an `.xlsx` or `.csv` file, or clicks the upload button to select a file.
+- `handleFile()` in `app.js` validates the file extension and size.
+- `uploadFile()` sends the file to the server via `POST /api/upload` as multipart form data.
+- The server's `upload_file()` handler saves the file to `uploads/input_data.{ext}`.
+- The server responds with `{ success: true, filepath: "..." }`.
+- The UI updates to show the uploaded file name and size.
+
+**Step 3 — Select Mode and Start Optimization**
+- The user selects either "Fast Mode" or "Deep Optimization".
+- The user clicks the "Start Merging" button.
+- `startMerging()` in `app.js` sends a `POST /api/merge` request with `{ filepath, mode }`.
+- The server's `merge()` handler creates a UUID task ID, initializes `TASK_STATUS[task_id]`, and spawns a daemon thread running `optimization_worker()`.
+- The server responds immediately with `{ success: true, task_id: "..." }`.
+
+**Step 4 — Background Processing**
+- `optimization_worker()` constructs a subprocess command: `python -u src/ipl_optimizer.py -i <input> -o <output> --verbose [mode-specific flags]`.
+- For Fast Mode: `--threshold 0` (forces greedy for all groups).
+- For Deep Mode: `--threshold 200 --time-limit 600` (prefers MILP for groups ≤ 200 rooms).
+- The subprocess starts. `process_exam_data()` executes inside it.
+- The pipeline reads the input file, identifies columns, validates data, and groups rows by (shift, campus).
+- For each group, it selects and runs the appropriate solver.
+- Progress is printed to stdout as `Processing [i/N]: shift=..., campus=..., rooms=...`.
+- The worker thread reads stdout line by line and extracts progress via regex matching.
+- It updates `TASK_STATUS[task_id]` with the current percentage and message.
+
+**Step 5 — Poll for Progress**
+- `pollTaskStatus()` in `app.js` sends `GET /api/status/<task_id>` every 1 second.
+- The server returns the current `{ status, progress, message, result }` from `TASK_STATUS`.
+- The UI updates a progress bar and status message in real time.
+- When `status` becomes `"completed"`, polling stops and the result JSON is passed to the rendering functions.
+
+**Step 6 — View Results**
+- `showResults()` in `app.js` receives the JSON data containing overall statistics and per-shift/campus detail objects.
+- Summary cards display: Initial Rooms, Final Rooms, Rooms Saved, Efficiency %.
+- `filterAndRender()` populates shift and campus dropdown filters from the data.
+- `createDetailCard()` renders a card for each shift/campus group showing kept rooms (green tags) and removed rooms (red tags).
+- Clicking a room tag calls `showRoomDetail()`, which displays a popup with the room's subject, student count, capacity, and merge information (which rooms merged into it, or which room it was merged to).
+- A "Show Merge Details" button calls `showMergeDetail()` and `createMergeModal()` to display a full merge table.
+
+**Step 7 — Download Results**
+- The user clicks the download button.
+- The browser requests `GET /results/Result_YYYY-MM-DD_HH-MM-SS.xlsx`.
+- The server's `download_result()` handler uses `send_from_directory` to serve the file with `as_attachment=True`.
+- The Excel workbook contains sheets: Summary, Summary_ByCampus, Room_Changes_Detail, Groups, Merges, MILP_Stats.
+
+#### CLI Path (Alternate)
+
+**Step 1** — The user runs: `python src/ipl_optimizer.py -i uploads/input.xlsx -o results/output.xlsx --verbose`
+
+**Step 2** — `main()` parses arguments and calls `process_exam_data()` with the specified parameters.
+
+**Step 3** — The pipeline executes identically to the web path (reading input, grouping, solving, reporting).
+
+**Step 4** — Progress and results are printed to the terminal.
+
+**Step 5** — The multi-sheet Excel workbook is written to the specified output path.
+
+**Step 6 (Optional)** — The user can run `python src/cli/show_summary.py results/output.xlsx` to view a formatted console summary.
+
+**Step 7 (Optional)** — The user can run `python src/utils/export_to_json.py results/output.xlsx` to generate a JSON file.
+
+### 5. Technologies and Technical Aspects
+
+- **Single-Page Application (SPA) pattern** — The frontend uses a single HTML page (`index.html`) with multiple sections that are shown/hidden via JavaScript. No page reloads occur during the workflow.
+- **Drag-and-drop file upload** — Implemented via HTML5 drag events (`dragover`, `dragleave`, `drop`) handled in `setupEventListeners()` in `app.js`.
+- **Asynchronous task processing** — The server uses a background thread + polling pattern instead of WebSockets or Server-Sent Events. The client polls every 1 second.
+- **Real-time progress via stdout parsing** — The background worker reads the subprocess stdout line by line and uses `re.search(r"Processing \[(\d+)/(\d+)\]:", line)` to extract progress numbers.
+- **Mode-dependent parameter configuration** — Fast Mode sets `threshold=0` (bypasses MILP for all groups). Deep Mode sets `threshold=200` and `time_limit=600` (allows up to 10 minutes per MILP solve).
+- **Excel multi-sheet output** — Results are written using `pd.ExcelWriter` with the `openpyxl` engine. Six sheets are generated: Summary, Summary_ByCampus, Room_Changes_Detail, Groups, Merges, MILP_Stats.
+- **Inter font** — The UI uses Google Fonts Inter (weights 300–800) loaded via external stylesheet.
+- **Dark mode** — Toggled via `toggleDarkMode()`, which sets a `data-theme` attribute on the HTML element. Theme preference is stored in `localStorage`.
+
+### 6. Code References
+
+| Interaction Step | Frontend Code | Backend Code |
+|:-----------------|:--------------|:-------------|
+| Welcome Page | [index.html](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/templates/index.html) `welcomePage` div (L20–L62) | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) `index()` (L267–L270) |
+| Enter Application | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) `enterApplication()` (L9–L14) | — |
+| File Upload | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) `handleFile()` (L94), `uploadFile()` (L111) | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) `upload_file()` (L272–L303) |
+| Start Merge | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) `startMerging()` (L154–L195) | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) `merge()` (L305–L348) |
+| Background Work | — | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) `optimization_worker()` (L37–L148) |
+| Poll Progress | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) `pollTaskStatus()` (L197–L229) | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) `get_task_status()` (L350–L363) |
+| Optimization | — | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) `process_exam_data()` (L552–L793) |
+| MILP Solving | — | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) `MILPRoomOptimizer.solve()` (L287–L436) |
+| Greedy Solving | — | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) `GreedyBinPacker.solve()` (L97–L223) |
+| Show Results | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) `showResults()` (L231), `filterAndRender()` (L275) | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) `export_results_to_json()` (L150–L265) |
+| Room Detail Popup | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) `showRoomDetail()` (L450–L607) | — |
+| Merge Modal | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) `showMergeDetail()` (L694), `createMergeModal()` (L772) | — |
+| Download | — | [server.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/server.py) `download_result()` (L365–L369) |
+| Dark Mode | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) `toggleDarkMode()` (L28–L33) | — |
+| Reset | [app.js](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/web/static/app.js) `resetApp()` (L639), `resetToWelcome()` (L16) | — |
+| CLI Execution | — | [ipl_optimizer.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/ipl_optimizer.py) `main()` (L800–L873) |
+| CLI Summary | — | [show_summary.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/cli/show_summary.py) `display_summary()` (L8) |
+| CLI JSON Export | — | [export_to_json.py](file:///c:/Users/ASUS%20ZENBOOK/Desktop/HCMUT/Research/Hieu/src/utils/export_to_json.py) `export_to_json()` (L9) |
+
+### 7. Key Technical Observations
+
+- **Two distinct user experiences.** The web interface provides a guided, step-by-step workflow with visual feedback. The CLI provides direct access for users comfortable with terminal commands. Both paths produce identical output files.
+- **Polling-based progress tracking.** The system uses a client-side polling loop (1-second interval) instead of WebSockets or Server-Sent Events. This is simpler to implement but generates continuous HTTP requests during processing. The server parses subprocess stdout lines using regex to extract progress percentages.
+- **Mode abstraction.** The "Fast" and "Deep" modes visible in the UI are not separate algorithms — they are parameter presets for the same `process_exam_data()` function. Fast Mode sets `threshold=0`, forcing all groups to use the greedy heuristic. Deep Mode sets `threshold=200` and `time_limit=600`, allowing the MILP solver to run on groups up to 200 rooms with a 10-minute time limit.
+- **Client-side filtering.** All result data is sent to the browser in a single JSON payload after optimization completes. Filtering by shift and campus happens entirely in JavaScript (`filterAndRender()`), without additional server requests. This is efficient for the expected dataset sizes.
+- **Interactive room exploration.** The frontend provides drill-down capability: users can click individual room tags to see subject codes, student counts, capacity, and merge relationships. This is implemented via dynamically generated popup elements (`showRoomDetail()`) rather than separate pages or API calls.
+- **No persistent session state.** The web interface does not use cookies, sessions, or user accounts. Each upload-merge-result cycle is independent. The browser's application state (`appState` object in `app.js`) resets when the page is refreshed.
+- **File size limit.** The Flask configuration sets `MAX_CONTENT_LENGTH = 16 * 1024 * 1024` (16 MB), limiting the maximum upload size. The file extension is also validated server-side to accept only `.xlsx` and `.csv`.
